@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	"maps"
 	"os"
 	"slices"
 	"strconv"
@@ -70,7 +69,7 @@ func main() {
 		return a.z - b.z
 	})
 
-	edgesByNode := map[int][]int{}
+	edgesByNode := make([][]int, len(points))
 	for _, i := range edges[:1000] {
 		edgesByNode[i.x] = append(edgesByNode[i.x], i.y)
 		edgesByNode[i.y] = append(edgesByNode[i.y], i.x)
@@ -78,14 +77,13 @@ func main() {
 
 	var components []int
 
-	closedSet := map[int]struct{}{}
+	closedSet := make([]bool, len(points))
+	openSet := make([]int, len(points))
 	for i := range len(points) {
-		if _, ok := closedSet[i]; ok {
+		if closedSet[i] {
 			continue
 		}
-		m := dfs(i, edgesByNode)
-		components = append(components, len(m))
-		maps.Copy(closedSet, m)
+		components = append(components, dfs(i, edgesByNode, closedSet, openSet[:0]))
 	}
 	slices.Sort(components)
 	fmt.Println("Part 1:", components[len(components)-1]*components[len(components)-2]*components[len(components)-3])
@@ -93,28 +91,32 @@ func main() {
 	for _, i := range edges[1000:] {
 		edgesByNode[i.x] = append(edgesByNode[i.x], i.y)
 		edgesByNode[i.y] = append(edgesByNode[i.y], i.x)
-		if len(dfs(0, edgesByNode)) == len(points) {
+		clear(closedSet)
+		if dfs(0, edgesByNode, closedSet, openSet[:0]) == len(points) {
 			fmt.Println("Part 2:", points[i.x].x*points[i.y].x)
 			break
 		}
 	}
 }
 
-func dfs(node int, edgesByNode map[int][]int) map[int]struct{} {
-	closedSet := map[int]struct{}{node: {}}
-	openSet := []int{node}
+func dfs(node int, edgesByNode [][]int, closedSet []bool, openSet []int) int {
+	openSet = openSet[:0]
+	closedSet[node] = true
+	count := 1
+	openSet = append(openSet, node)
 	for len(openSet) > 0 {
 		n := openSet[len(openSet)-1]
 		openSet = openSet[:len(openSet)-1]
 		for _, i := range edgesByNode[n] {
-			if _, ok := closedSet[i]; ok {
+			if closedSet[i] {
 				continue
 			}
-			closedSet[i] = struct{}{}
+			closedSet[i] = true
+			count++
 			openSet = append(openSet, i)
 		}
 	}
-	return closedSet
+	return count
 }
 
 type (

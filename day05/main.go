@@ -77,7 +77,6 @@ func main() {
 	}
 	count2 := 0
 	for _, i := range intervals {
-		fmt.Printf("(%d, %d)\n", i.start, i.end-1)
 		count2 += i.end - i.start
 	}
 	fmt.Println("Part 1:", count)
